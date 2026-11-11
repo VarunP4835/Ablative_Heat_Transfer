@@ -1,60 +1,78 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
-from config import (
-    T_END,
-    SENSOR_POSITIONS,
-    L0
-)
+from solver import solve_heat_transfer
 
-from mesh import (
-    domain_length,
-    landau_grid,
-    physical_grid,
-    grid_velocity,
-    remap_grid
-)
-eta = landau_grid()
-x_initial = physical_grid(0, eta)
+times, temperatures, grids = solve_heat_transfer()
 
-x_final = physical_grid(T_END, eta)
+print("\nTEMPERATURE RESULTS")
 
-L_initial = domain_length(0)
+for j, t in enumerate(times):
 
-L_final = domain_length(T_END)
+    print(f"\nTime = {t:.2f} seconds")
 
-print("INITIAL DOMAIN")
-print("-------------------------")
-print("Thickness:", L_initial, "m")
-print("First grid point:", x_initial[0])
-print("Last grid point:", x_initial[-1])
+    print(
+        "Minimum temperature:",
+        temperatures[j].min()
+    )
+
+    print(
+        "Maximum temperature:",
+        temperatures[j].max()
+    )
 
 
-print("\nFINAL DOMAIN")
-print("-------------------------")
-print("Thickness:", L_final, "m")
-print("First grid point:", x_final[0])
-print("Last grid point:", x_final[-1])
+
+plt.figure(figsize=(9, 6))
+
+for j, t in enumerate(times):
+
+    plt.plot(
+        grids[j] * 1000,
+        temperatures[j],
+        label=f"t = {t:.0f} s"
+    )
+
+plt.xlabel("Position (mm)")
+
+plt.ylabel("Temperature (K)")
+
+plt.title("Temperature Distribution During Ablation")
+
+plt.legend()
+
+plt.grid(True)
+
+plt.tight_layout()
+
+plt.savefig("outputs/temperature_profiles.png")
+
+plt.show()
 
 
-# Calculate grid velocities
+plt.figure(figsize=(9, 6))
 
-velocity = grid_velocity(eta)
+for j, t in enumerate(times):
 
-print("\nGRID VELOCITIES")
-print("-------------------------")
-print("Left boundary:", velocity[0], "m/s")
-print("Middle point:", velocity[len(velocity)//2], "m/s")
-print("Right boundary:", velocity[-1], "m/s")
+    plt.scatter(
+        grids[j] * 1000,
+        np.full(len(grids[j]), t),
+        s=5,
+        label=f"t = {t:.0f} s"
+    )
 
+plt.xlabel("Position (mm)")
 
-print("\nSENSOR LOCATIONS")
-print("-------------------------")
+plt.ylabel("Time (s)")
 
-for x in SENSOR_POSITIONS:
-    print(x, "m")
+plt.title("Moving Computational Grid")
 
+plt.legend()
 
-if SENSOR_POSITIONS[-1] < L_final:
-    print("\nAll sensors remain inside the material.")
-else:
-    print("\nWarning: A sensor is outside the material.")
+plt.grid(True)
+
+plt.tight_layout()
+
+plt.savefig("outputs/moving_grid.png")
+
+plt.show()
