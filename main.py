@@ -45,7 +45,7 @@ plt.grid(True)
 
 plt.tight_layout()
 
-plt.savefig("outputs/temperature_profiles.png")
+plt.savefig("output/temperature_profiles.png")
 
 plt.show()
 
@@ -73,6 +73,6 @@ plt.grid(True)
 
 plt.tight_layout()
 
-plt.savefig("outputs/moving_grid.png")
+plt.savefig("output/moving_grid.png")
 
 plt.show()

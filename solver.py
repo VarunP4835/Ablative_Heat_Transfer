@@ -5,7 +5,6 @@ from config import (
     C,
     K,
     T0,
-    L0,
     L_DOT,
     D_T,
     T_END,
@@ -19,7 +18,10 @@ from tdma import solve_tridiagonal
 def solve_heat_transfer(heat_flux=Q_TRUE, dt=D_T, t_end=T_END):
     eta = landau_grid()
     N = len(eta)
-    x = physical_grid(0, eta)
+    if N < 3:
+            raise ValueError("At least 3 grid nodes are required.")
+    
+    x = physical_grid(0.0, eta)
     T = np.full(N, T0,dtype = float)
     times = [0.0]
     temperature_history = [T.copy()]
@@ -43,7 +45,7 @@ def solve_heat_transfer(heat_flux=Q_TRUE, dt=D_T, t_end=T_END):
                     )
     
             sample_steps[step_index] = t
-
+    alpha = K / (RHO * C)
     for step in range(1,n_steps + 1):
        t_old = (step-1)*dt
        t_new = step * dt
@@ -76,32 +78,32 @@ def solve_heat_transfer(heat_flux=Q_TRUE, dt=D_T, t_end=T_END):
            dx_left = dx[i-1]
            dx_right = dx[i]
 
-           dx_cv = 0.5*(dx_left + dx_right)
-
-           D = dx_left*0.5 + dx_cv + dx_right*0.5
-
-           R_right = (
-               dx_cv / (2.0*k[i])
-               + dx_right / (2.0*k[i+1])
-           )
-           R_left = (
-               dx_cv / (2.0*k[i])
-               + dx_left / (2.0*k[i-1])
-           )
-           C_right = dt/(rho_cp * R_right)
-           C_left = dt/(rho_cp * R_left)
-
-           S = velocity[i]*dt/ D
-
-           lower[i] = S-C_left
-           diagonal[i] = 1.0 + C_left + C_right
-           upper[i] = -S-C_right
+           dx_cv = 0.5 * (dx_left + dx_right)
+           
+           D_left = alpha / (dx_left * dx_cv)
+           D_right = alpha / (dx_right * dx_cv)
+           
+           adv_coeff = (
+                           velocity[i] * dt /
+                           (dx_left + dx_right)
+                       )
+           
+           lower[i] = -dt * D_left - adv_coeff
+           
+           diagonal[i] = (
+                           1.0
+                           + dt * D_left
+                           + dt * D_right
+                       )
+           
+           upper[i] = -dt * D_right + adv_coeff
+           
            rhs[i] = T[i]
 
-    #Right Boundary Condition
+       #Right Boundary Condition
        lower[N-1] = -1.0
        diagonal[N-1] = 1.0
-       rhs[N-1] = (q*dx[N-1]/k[N-2])
+       rhs[N - 1] = q * dx[N - 2] / K
        T_new = solve_tridiagonal(lower, diagonal, upper, rhs)
        if np.any(np.isnan(T_new)):
            raise ValueError("NaN encountered in temperature solution at step {}".format(step))

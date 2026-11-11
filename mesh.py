@@ -28,7 +28,7 @@ def landau_grid():
     np.ndarray: Array of node positions in meters.
     """
     # Create a normalized coordinate from the fixed face to the receding face.
-    eta = np.linspace(0.0, 0.1, N_NODES)
+    eta = np.linspace(0.0, 1.0, N_NODES)
     return eta
 
 
